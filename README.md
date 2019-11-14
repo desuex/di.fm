@@ -21,3 +21,5 @@ python3 main.py -l -d
 ```
 
 Note: `-d` flag is optional, but it helps you to understand what's actually happening
+
+Anyway, enjoy your music! 
