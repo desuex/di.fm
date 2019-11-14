@@ -22,9 +22,13 @@ parser.add_option("-d", "--debug", dest="debug_mode", help="Show debug informati
 parser.add_option("-i", "--init", dest="init_db", help="Create tables", default=False,
                   action="store_true")
 parser.add_option("-w", "--watch", dest="watch_plays", help="Watch currently playing songs on all the channels",
-                  default=False,
-                  action="store_true")
-options = parser.parse_args()[0]
+                  default=False, action="store_true")
+parser.add_option("-s", "--export-channels", dest="channels", help="Export channels list",
+                  default=False, action="store_true")
+parser.add_option("-x", "--export", dest="export", help="Export top list of tracks from channel by channel id",
+                  type="string")
+
+(options, args) = parser.parse_args()
 parse_links = options.parse_links
 parse_artists = options.parse_artists
 parse_tracks = options.parse_tracks
@@ -32,6 +36,8 @@ parse_channels = options.parse_channels
 init_db = options.init_db
 watch_plays = options.watch_plays
 debug_mode = options.debug_mode
+channels = options.channels
+export = options.export
 
 if debug_mode:
     logging.basicConfig(level=logging.DEBUG)
@@ -247,6 +253,21 @@ async def get_track_links(track_id, track_name):
     conn.commit()
 
 
+def print_channel_tracks(channel_id):
+    query = 'SELECT (a.name || " - " || title) as title, (upvotes - downvotes) as score, tl.youtube_link from tracks ' \
+            'left join artists a on a.id = tracks.artist_id left join track_on_channel toc on toc.track_id = ' \
+            'tracks.id left join track_links tl on tl.track_id = tracks.id GROUP BY tl.track_id HAVING channel_id = ' \
+            '(?) order by score desc '
+    for row in c.execute(query, channel_id):
+        print("%s (score %i): %s" % (row[0], row[1], row[2]))
+
+
+def print_channel_list():
+    query = 'SELECT id, name from channels'
+    for row in c.execute(query):
+        print("%i : %s" % (row[0], row[1]))
+
+
 async def main(queue_loop):
     if parse_links:
         await background_link_search(queue_loop)
@@ -261,6 +282,10 @@ async def main(queue_loop):
 
 
 if __name__ == '__main__':
+    if export:
+        print_channel_tracks(export)
+    if channels:
+        print_channel_list()
     if init_db:
         create_tables()
     loop = asyncio.get_event_loop()
