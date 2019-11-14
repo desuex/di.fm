@@ -161,7 +161,7 @@ def unparsed_track_ids():
 def unparsed_track_links():
     query = 'SELECT t.id as track_id, (a.name || " - " || t.title) as track_name from track_on_channel toc LEFT JOIN ' \
             'tracks t on t.id = toc.track_id LEFT JOIN artists a on a.id = t.artist_id LEFT JOIN track_link_attempts ' \
-            'tla on tla.track_id = toc.track_id WHERE tla.attempt_at IS NULL'
+            'tla on tla.track_id = toc.track_id WHERE tla.attempt_at IS NULL and track_name is not null'
     data = []
     for row in c.execute(query):
         data.append((row[0], row[1]))
